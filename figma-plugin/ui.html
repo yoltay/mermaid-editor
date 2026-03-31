@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 16px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #cba6f7;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: #6c7086;
+      margin-bottom: 12px;
+    }
+
+    textarea {
+      flex: 1;
+      width: 100%;
+      background: #313244;
+      border: 1px solid #45475a;
+      border-radius: 8px;
+      color: #cdd6f4;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 12px;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      border-color: #cba6f7;
+    }
+
+    textarea::placeholder {
+      color: #585b70;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    select {
+      flex: 1;
+      background: #313244;
+      border: 1px solid #45475a;
+      border-radius: 6px;
+      color: #cdd6f4;
+      font-size: 12px;
+      padding: 8px 12px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    button {
+      flex: 2;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button.primary {
+      background: #cba6f7;
+      color: #1e1e2e;
+    }
+
+    button.primary:hover {
+      background: #b4befe;
+      transform: translateY(-1px);
+    }
+
+    button.primary:active {
+      transform: translateY(0);
+    }
+
+    .status {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #a6e3a1;
+      min-height: 16px;
+      text-align: center;
+    }
+
+    .status.error {
+      color: #f38ba8;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Mermaid → FigJam</h2>
+  <p class="subtitle">Mermaid flowchart kodunu yapıştırın, FigJam'de düzenlenebilir akışa dönüştürün.</p>
+
+  <textarea id="code" placeholder="flowchart TD
+    A[Başlangıç] --> B{Karar}
+    B -->|Evet| C[Sonuç 1]
+    B -->|Hayır| D[Sonuç 2]
+    C --> E[Son]
+    D --> E">flowchart TD
+    A[Başlangıç] --> B{Karar}
+    B -->|Evet| C[Sonuç 1]
+    B -->|Hayır| D[Sonuç 2]
+    C --> E[Son]
+    D --> E</textarea>
+
+  <div class="controls">
+    <select id="nodeStyle">
+      <option value="sticky">Sticky Note</option>
+      <option value="shape" selected>Shape + Text</option>
+    </select>
+    <button class="primary" id="generate">FigJam'de Oluştur</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <script>
+    const codeEl = document.getElementById('code');
+    const statusEl = document.getElementById('status');
+    const generateBtn = document.getElementById('generate');
+    const nodeStyleEl = document.getElementById('nodeStyle');
+
+    generateBtn.addEventListener('click', () => {
+      const code = codeEl.value.trim();
+      if (!code) {
+        statusEl.textContent = 'Lütfen Mermaid kodu girin.';
+        statusEl.className = 'status error';
+        return;
+      }
+
+      statusEl.textContent = 'Oluşturuluyor...';
+      statusEl.className = 'status';
+
+      parent.postMessage({
+        pluginMessage: {
+          type: 'generate',
+          code: code,
+          nodeStyle: nodeStyleEl.value
+        }
+      }, '*');
+    });
+
+    // Listen for messages from the plugin code
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (!msg) return;
+
+      if (msg.type === 'success') {
+        statusEl.textContent = `✓ ${msg.nodeCount} düğüm, ${msg.edgeCount} bağlantı oluşturuldu!`;
+        statusEl.className = 'status';
+      } else if (msg.type === 'error') {
+        statusEl.textContent = `✗ Hata: ${msg.message}`;
+        statusEl.className = 'status error';
+      }
+    };
+  </script>
+
+</body>
+</html>
